@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FilmSync</title><link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<main>
+  <h1>FilmSync</h1>
+  <section id="join">
+    <input id="room" maxlength="6" placeholder="Room code" autocomplete="off">
+    <select id="initial"><option value="A">A</option><option value="L">L</option></select>
+    <button id="joinBtn">Join</button>
+  </section>
+  <section id="watch" hidden>
+    <div class="line">Room <strong id="roomLabel"></strong></div>
+    <div class="line"><span id="aDot" class="dot"></span>A &nbsp;&nbsp; <span id="lDot" class="dot"></span>L</div>
+    <div id="status">Waiting</div>
+    <label class="file">Choose film<input id="file" type="file" accept="video/mp4,video/*"></label>
+    <video id="video" controls playsinline></video>
+  </section>
+</main>
+<script src="/socket.io/socket.io.js"></script><script src="/app.js"></script>
+</body></html>
