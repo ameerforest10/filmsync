@@ -26,7 +26,7 @@ $("file").onchange = e => {
 
 function send(action) {
   if (!joined || !fileReady || applying) return;
-  socket.emit("control", { action, time: video.currentTime || 0 });
+  socket.emit("control", { action, time: video.currentTime || 0, playing: !video.paused });
 }
 
 video.addEventListener("play", () => send("play"));
@@ -46,22 +46,23 @@ socket.on("state", async state => {
   if (!A || !L) $("status").textContent = A ? "Waiting for L…" : L ? "Waiting for A…" : "Waiting…";
   else if (!bothReady) $("status").textContent = "Choose film on both devices";
   else $("status").textContent = state.playing ? "Synced" : "Synced — paused";
-  if (!fileReady) return;
+
+  if (!fileReady || state.sourceId === socket.id) return;
 
   const target = Math.max(0, Number(state.time) || 0);
   applying = true;
   try {
-    if (Math.abs(video.currentTime - target) > 0.65) video.currentTime = target;
+    if (Math.abs(video.currentTime - target) > 0.35) video.currentTime = target;
     if (!state.playing && !video.paused) video.pause();
     if (state.playing && video.paused) {
       try { await video.play(); } catch { $("status").textContent = "Press play to continue"; }
     }
-  } finally { setTimeout(() => applying = false, 120); }
+  } finally { setTimeout(() => applying = false, 150); }
 });
 
 socket.on("disconnect", () => {
   if (joined) $("status").textContent = "Reconnecting…";
-  if (!video.paused) { applying = true; video.pause(); setTimeout(() => applying = false, 120); }
+  if (!video.paused) { applying = true; video.pause(); setTimeout(() => applying = false, 150); }
 });
 socket.on("connect", () => {
   if (joined && roomCode) socket.emit("join", { roomCode, initial: me }, res => {
