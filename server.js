@@ -23,10 +23,10 @@ function roomState(room) {
 function position(room) {
   return room.playing ? room.time + (Date.now() - room.updatedAt) / 1000 : room.time;
 }
-function broadcast(roomCode) {
+function broadcast(roomCode, sourceId = null) {
   const room = rooms.get(roomCode);
   if (!room) return;
-  io.to(roomCode).emit("state", { ...roomState(room), time: position(room), playing: room.playing, serverNow: Date.now() });
+  io.to(roomCode).emit("state", { ...roomState(room), time: position(room), serverNow: Date.now(), sourceId });
 }
 function pauseRoom(roomCode) {
   const room = rooms.get(roomCode);
@@ -65,7 +65,7 @@ io.on("connection", socket => {
     if (!ready) pauseRoom(code); else broadcast(code);
   });
 
-  socket.on("control", ({ action, time }) => {
+  socket.on("control", ({ action, time, playing }) => {
     const code = socket.data.roomCode, room = rooms.get(code);
     if (!room || !room.members.has(socket.id)) return;
     const allReady = room.members.size === 2 && [...room.members.values()].every(m => m.ready);
@@ -74,9 +74,12 @@ io.on("connection", socket => {
     const t = Number(time);
     if (Number.isFinite(t)) room.time = Math.max(0, t);
     room.updatedAt = Date.now();
+
     if (action === "play") room.playing = true;
-    if (action === "pause" || action === "seek") room.playing = false;
-    broadcast(code);
+    if (action === "pause") room.playing = false;
+    if (action === "seek") room.playing = !!playing;
+
+    broadcast(code, socket.id);
   });
 
   socket.on("sync-request", () => {
